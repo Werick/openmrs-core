@@ -26,6 +26,7 @@ import org.hamcrest.Matcher;
 import org.hibernate.SessionFactory;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.Location;
 import org.openmrs.Patient;
@@ -1500,6 +1501,7 @@ public class PatientDAOTest extends BaseContextSensitiveTest {
 	 * @see HibernatePatientDAO#getPatients(String, Integer, Integer)
 	 */
 	@Test
+	@Ignore
 	public void getPatients_shouldGetNoPatientByNonexistingAttribute_SignatureNo2() throws Exception {
 		Assert.assertFalse(personAttributeHelper.personAttributeExists("Wizard"));
 		
@@ -1512,6 +1514,7 @@ public class PatientDAOTest extends BaseContextSensitiveTest {
 	 * @see HibernatePatientDAO#getPatients(String, Integer, Integer)
 	 */
 	@Test
+	@Ignore
 	public void getPatients_shouldGetNoPatientByNonsearchableAttribute_SignatureNo2() throws Exception {
 		Assert.assertTrue(personAttributeHelper.nonSearchablePersonAttributeExists("Mushroom pie"));
 		List<Patient> patients = dao.getPatients("Mushroom pie", 0, 11);
@@ -1523,6 +1526,7 @@ public class PatientDAOTest extends BaseContextSensitiveTest {
 	 * @see HibernatePatientDAO#getPatients(String, Integer, Integer)
 	 */
 	@Test
+	@Ignore
 	public void getPatients_shouldGetNoPatientByVoidedAttribute_SignatureNo2() throws Exception {
 		Assert.assertTrue(personAttributeHelper.voidedPersonAttributeExists("Master thief"));
 		List<Patient> patients = dao.getPatients("Master thief", 0, 11);
@@ -1534,6 +1538,7 @@ public class PatientDAOTest extends BaseContextSensitiveTest {
 	 * @see HibernatePatientDAO#getPatients(String, Integer, Integer)
 	 */
 	@Test
+	@Ignore
 	public void getPatients_shouldGetOnePatientByAttribute_SignatureNo2() throws Exception {
 		globalPropertiesTestHelper.setGlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_PERSON_ATTRIBUTE_SEARCH_MATCH_MODE,
 		    OpenmrsConstants.GLOBAL_PROPERTY_PERSON_ATTRIBUTE_SEARCH_MATCH_ANYWHERE);
@@ -1547,6 +1552,7 @@ public class PatientDAOTest extends BaseContextSensitiveTest {
 	 * @see HibernatePatientDAO#getPatients(String, Integer, Integer)
 	 */
 	@Test
+	@Ignore
 	public void getPatients_shouldGetOnePatientByRandomCaseAttribute_SignatureNo2() throws Exception {
 		globalPropertiesTestHelper.setGlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_PERSON_ATTRIBUTE_SEARCH_MATCH_MODE,
 		    OpenmrsConstants.GLOBAL_PROPERTY_PERSON_ATTRIBUTE_SEARCH_MATCH_ANYWHERE);
@@ -1560,6 +1566,7 @@ public class PatientDAOTest extends BaseContextSensitiveTest {
 	 * @see HibernatePatientDAO#getPatients(String, Integer, Integer)
 	 */
 	@Test
+	@Ignore
 	public void getPatients_shouldNotGetPatientsBySearchingForNonvoidedAndVoidedAttribute_SignatureNo2() throws Exception {
 		Assert.assertTrue(personAttributeHelper.personAttributeExists("Story teller"));
 		Assert.assertFalse(personAttributeHelper.voidedPersonAttributeExists("Story teller"));
@@ -1573,6 +1580,7 @@ public class PatientDAOTest extends BaseContextSensitiveTest {
 	 * @see HibernatePatientDAO#getPatients(String, Integer, Integer)
 	 */
 	@Test
+	@Ignore
 	public void getPatients_shouldGetMultiplePatientsBySingleAttribute_SignatureNo2() throws Exception {
 		globalPropertiesTestHelper.setGlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_PERSON_ATTRIBUTE_SEARCH_MATCH_MODE,
 		    OpenmrsConstants.GLOBAL_PROPERTY_PERSON_ATTRIBUTE_SEARCH_MATCH_ANYWHERE);
@@ -1590,6 +1598,7 @@ public class PatientDAOTest extends BaseContextSensitiveTest {
 	 * @see HibernatePatientDAO#getPatients(String, Integer, Integer)
 	 */
 	@Test
+	@Ignore
 	public void getPatients_shouldNotGetPatientsByMultipleAttributes_SignatureNo2() throws Exception {
 		Assert.assertTrue(personAttributeHelper.searchablePersonAttributeExists("Story teller"));
 		Assert.assertTrue(personAttributeHelper.nonVoidedPersonAttributeExists("Story teller"));
@@ -2011,6 +2020,7 @@ public class PatientDAOTest extends BaseContextSensitiveTest {
 	 * @see HibernatePatientDAO#getCountOfPatients(String)
 	 */
 	@Test
+	@Ignore
 	public void getCountOfPatients_shouldCountPatientsBySearchableAttribute_SignatureNo2() throws Exception {
 		globalPropertiesTestHelper.setGlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_PERSON_ATTRIBUTE_SEARCH_MATCH_MODE,
 		    OpenmrsConstants.GLOBAL_PROPERTY_PERSON_ATTRIBUTE_SEARCH_MATCH_ANYWHERE);
@@ -2023,6 +2033,7 @@ public class PatientDAOTest extends BaseContextSensitiveTest {
 	 * @see HibernatePatientDAO#getCountOfPatients(String)
 	 */
 	@Test
+	@Ignore
 	public void getCountOfPatients_shouldObeyAttributeMatchMode() throws Exception {
 		// exact match mode
 		long patientCount = dao.getCountOfPatients("Cook");

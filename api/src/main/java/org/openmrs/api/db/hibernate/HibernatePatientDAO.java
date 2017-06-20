@@ -28,6 +28,12 @@ import org.hibernate.Query;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.engine.SessionFactoryImplementor;
+import org.hibernate.engine.SessionImplementor;
+import org.hibernate.impl.CriteriaImpl;
+import org.hibernate.loader.criteria.CriteriaJoinWalker;
+import org.hibernate.loader.criteria.CriteriaQueryTranslator;
+import org.hibernate.persister.entity.OuterJoinLoadable;
 import org.openmrs.Location;
 import org.openmrs.Patient;
 import org.openmrs.PatientIdentifier;
@@ -220,10 +226,33 @@ public class HibernatePatientDAO implements PatientDAO {
 		}
 		
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Patient.class);
-		criteria = new PatientSearchCriteria(sessionFactory, criteria).prepareCriteria(query, includeVoided);
+		PatientSearchCriteria patientSearchCriteria = new PatientSearchCriteria(sessionFactory, criteria);
+		
+		char[] digits = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };
+		
+		// Separate identifier search from name search to speed up searching
+		if (StringUtils.containsAny(query, digits)) {
+			// Assume it is an identifier search
+			criteria = patientSearchCriteria.prepareCriteria(query, includeVoided, SearchCategory.IDENTIFIER);
+			setFirstAndMaxResult(criteria, start, length);
+			return criteria.list();
+		}
+		
+		// Else assume it is a name
+		criteria = patientSearchCriteria.prepareCriteria(query, includeVoided, SearchCategory.NAME);
 		setFirstAndMaxResult(criteria, start, length);
 		
-		return criteria.list();
+		List<Patient> patientList = criteria.list();
+		if (patientList.isEmpty()) {
+			// May be it is an identifier after all
+			criteria = sessionFactory.getCurrentSession().createCriteria(Patient.class);
+			patientSearchCriteria = new PatientSearchCriteria(sessionFactory, criteria);
+			criteria = patientSearchCriteria.prepareCriteria(query, includeVoided, SearchCategory.IDENTIFIER);
+			setFirstAndMaxResult(criteria, start, length);
+			return criteria.list();
+		}
+		
+		return patientList;
 	}
 	
 	/**
@@ -612,17 +641,19 @@ public class HibernatePatientDAO implements PatientDAO {
 	 * @see org.openmrs.api.db.PatientDAO#getCountOfPatients(String)
 	 */
 	public Long getCountOfPatients(String query) {
-		if (StringUtils.isBlank(query)) {
-			return 0L;
-		}
+		//		if (StringUtils.isBlank(query)) {
+		//			return 0L;
+		//		}
 		
-		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Patient.class);
-		criteria = new PatientSearchCriteria(sessionFactory, criteria).prepareCriteria(query);
+		//		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Patient.class);
+		//		criteria = new PatientSearchCriteria(sessionFactory, criteria).prepareCriteria(query);
 		
 		// Using Hibernate projections did NOT work here, the resulting queries could not be executed due to
 		// missing group-by clauses. Hence the poor man's implementation of counting search results.
 		//
-		return (long) criteria.list().size();
+		//		return (long) criteria.list().size();
+		
+		return getCountOfPatients(query, false);
 	}
 	
 	/**
@@ -634,11 +665,56 @@ public class HibernatePatientDAO implements PatientDAO {
 		}
 		
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Patient.class);
-		criteria = new PatientSearchCriteria(sessionFactory, criteria).prepareCriteria(query, includeVoided);
+		//		criteria = new PatientSearchCriteria(sessionFactory, criteria).prepareCriteria(query, includeVoided);
+		PatientSearchCriteria patientSearchCriteria = new PatientSearchCriteria(sessionFactory, criteria);
 		
 		// Using Hibernate projections did NOT work here, the resulting queries could not be executed due to
 		// missing group-by clauses. Hence the poor man's implementation of counting search results.
 		//
-		return (long) criteria.list().size();
+		//		return (long) criteria.list().size();
+		
+		char[] digits = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };
+		
+		// Separate identifier search from name search to speed up searching
+		if (StringUtils.containsAny(query, digits)) {
+			// Assume it is an identifier search
+			criteria = patientSearchCriteria.prepareCriteria(query, includeVoided, SearchCategory.IDENTIFIER);
+			return (long) criteria.list().size();
+		}
+		
+		// Else assume it is a name
+		criteria = patientSearchCriteria.prepareCriteria(query, includeVoided, SearchCategory.NAME);
+		
+		Long noOfPatients = (long) criteria.list().size();
+		if (noOfPatients == 0L) {
+			// May be it is an identifier after all
+			criteria = sessionFactory.getCurrentSession().createCriteria(Patient.class);
+			patientSearchCriteria = new PatientSearchCriteria(sessionFactory, criteria);
+			criteria = patientSearchCriteria.prepareCriteria(query, includeVoided, SearchCategory.IDENTIFIER);
+			
+			return (long) criteria.list().size();
+		}
+		
+		return noOfPatients;
+	}
+	
+	// Call this method with a string to be searched, it will print the resulted query on console
+	public void printQueryFromCriteria(Criteria criteria) {
+		if (criteria == null) {
+			System.out.println("Passed criteria is null");
+		}
+		
+		CriteriaImpl criteriaImpl = (CriteriaImpl) criteria;
+		SessionImplementor session = criteriaImpl.getSession();
+		SessionFactoryImplementor factory = session.getFactory();
+		CriteriaQueryTranslator translator = new CriteriaQueryTranslator(factory, criteriaImpl, criteriaImpl
+		        .getEntityOrClassName(), CriteriaQueryTranslator.ROOT_SQL_ALIAS);
+		
+		String[] implementors = factory.getImplementors(criteriaImpl.getEntityOrClassName());
+		
+		CriteriaJoinWalker walker = new CriteriaJoinWalker((OuterJoinLoadable) factory.getEntityPersister(implementors[0]),
+		        translator, factory, criteriaImpl, criteriaImpl.getEntityOrClassName(), session.getLoadQueryInfluencers());
+		
+		System.out.println(walker.getSQLString());
 	}
 }

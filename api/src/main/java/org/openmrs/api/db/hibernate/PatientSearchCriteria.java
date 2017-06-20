@@ -154,6 +154,33 @@ public class PatientSearchCriteria {
 		return criteria;
 	}
 	
+	Criteria prepareCriteria(String query, boolean includeVoided, SearchCategory category) {
+		addAliasForName(criteria, true);
+		
+		switch (category) {
+			case NAME:
+				criteria.add(prepareCriterionForName(query, includeVoided));
+				break;
+			case IDENTIFIER:
+				addAliasForIdentifiers(criteria);
+				criteria.add(prepareCriterionForIdentifier(query, new ArrayList<PatientIdentifierType>(), false,
+				    includeVoided));
+				break;
+			case ATTRIBUTE:
+				personSearchCriteria.addAliasForAttribute(criteria);
+				prepareCriterionForAttribute(query, includeVoided);
+		}
+		
+		if (!includeVoided) {
+			criteria.add(Restrictions.eq("voided", false));
+		}
+		criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
+		
+		log.debug(criteria.toString());
+		
+		return criteria;
+	}
+	
 	/**
 	 * Provides a Hibernate criteria object for searching patients by name, identifier or searchable attribute.
 	 *
@@ -307,7 +334,7 @@ public class PatientSearchCriteria {
 		String prefix = adminService.getGlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_PATIENT_IDENTIFIER_PREFIX, "");
 		String suffix = adminService.getGlobalProperty(OpenmrsConstants.GLOBAL_PROPERTY_PATIENT_IDENTIFIER_SUFFIX, "");
 		StringBuffer likeString = new StringBuffer(prefix).append(identifier).append(suffix);
-		return Restrictions.ilike("ids.identifier", likeString.toString());
+		return Restrictions.like("ids.identifier", likeString.toString());
 	}
 	
 	/**
